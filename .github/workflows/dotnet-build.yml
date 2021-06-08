@@ -23,3 +23,9 @@ jobs:
       run: dotnet build --no-restore
     - name: Test
       run: dotnet test --no-build --verbosity normal
+    - name: Pack
+      run: dotnet pack --no-build
+    - name: Publish
+      run: dotnet nuget push "**/*.nupkg" -s "https://nuget.pkg.github.com/HAXEN/index.json" --api-key ${PACKAGE_TOKEN}  --skip-duplicate
+      env: 
+        PACKAGE_TOKEN: ${{ secrets.PACKAGE_TOKEN }}
