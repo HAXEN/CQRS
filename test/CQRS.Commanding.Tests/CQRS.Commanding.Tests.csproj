@@ -20,6 +20,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\src\CQRS.Commanding.Testing\CQRS.Commanding.Testing.csproj" />
     <ProjectReference Include="..\..\src\CQRS.Commanding\CQRS.Commanding.csproj" />
   </ItemGroup>
 
