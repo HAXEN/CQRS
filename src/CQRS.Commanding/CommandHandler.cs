@@ -11,6 +11,7 @@ namespace CQRS.Commanding
 
         void ICommandHandler.AppendPersisted(IEvent @event)
         {
+            ApplyEvent(@event, false);
             _persistedVersion++;
         }
 
@@ -19,18 +20,20 @@ namespace CQRS.Commanding
 
         protected void AddEvent(IEvent @event)
         {
-            ApplyEvent(@event);
-
+            ApplyEvent(@event, true);
             _unPersistedEvents.Add(@event);
         }
 
-        private void ApplyEvent(IEvent @event)
+        private void ApplyEvent(IEvent @event, bool throwIfMissingHandler)
         {
             var applyMethod = GetType()
                 .GetMethod("Apply", BindingFlags.NonPublic | BindingFlags.Instance, null, new[] {@event.GetType()}, null);
 
             if (applyMethod == null)
-                throw new MissingEventHandlerException();
+                if (throwIfMissingHandler)
+                    throw new MissingEventHandlerException();
+                else
+                    return;
 
             applyMethod.Invoke(this, new[] {@event});
         }

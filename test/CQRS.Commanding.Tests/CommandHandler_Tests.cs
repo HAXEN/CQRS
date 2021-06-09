@@ -1,6 +1,5 @@
-﻿using System.ComponentModel;
+﻿using CQRS.Commanding.Testing;
 using Xunit;
-using CQRS.Commanding.Testing;
 
 namespace CQRS.Commanding.Tests
 {
@@ -15,7 +14,29 @@ namespace CQRS.Commanding.Tests
         }
 
         [Fact]
-        public void Should_throw_if_private_handler_for_event_is_missing()
+        public void Should_handle_event_when_handler_exists_for_persisted_events()
+        {
+            _handler.RePlayEvents(player => player
+                .Append<TestEvent>(e =>
+                {
+                    e.Id = "Id";
+                    e.Name = "Name";
+                }));
+
+            Assert.Equal(0, _handler.PersistedVersion());
+            Assert.True(_handler.EventHandled);
+        }
+
+        [Fact]
+        public void Should_not_handle_event_when_handler_is_missing_for_persisted_events()
+        {
+            _handler.AppendPersisted(new NoHandlerEvent());
+            Assert.Equal(0, _handler.PersistedVersion());
+            Assert.False(_handler.EventHandled);
+        }
+
+        [Fact]
+        public void Should_throw_if_private_handler_for_event_is_missing_for_command()
         {
             Assert.Throws<MissingEventHandlerException>(() => _handler.Execute(new NoEventHandlerCommand()));
         }
@@ -31,10 +52,18 @@ namespace CQRS.Commanding.Tests
         [Fact]
         public void Should_be_able_to_Append_Persisted_events()
         {
-            _handler.AppendPersisted(new TestEvent{Id="id", Name="name"});
-            Assert.Equal(0, _handler.PersistedVersion());
+            _handler.RePlayEvents(replay => replay
+                .Append<TestEvent>(evt =>
+                {
+                    evt.Id = "Id";
+                    evt.Name = "Name";
+                })
+                .Append<TestEvent>(evt =>
+                {
+                    evt.Id = "Id1";
+                    evt.Name = "Name1";
+                })); 
 
-            _handler.AppendPersisted(new TestEvent{ Id = "id1", Name = "name1" });
             Assert.Equal(1, _handler.PersistedVersion());
         }
 

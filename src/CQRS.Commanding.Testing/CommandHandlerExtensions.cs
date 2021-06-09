@@ -1,4 +1,4 @@
-﻿using System.Data;
+﻿using System;
 
 namespace CQRS.Commanding.Testing
 {
@@ -8,6 +8,14 @@ namespace CQRS.Commanding.Testing
             where THandler : class, ICommandHandler
         {
             return handler.PersistedVersion;
+        }
+
+        public static THandler RePlayEvents<THandler>(this THandler handler, Action<IReplayEvents> replay)
+            where THandler : class, ICommandHandler
+        {
+            var rePlayer = new HandlerEventRePlayer<THandler>(handler);
+            replay.Invoke(rePlayer);
+            return handler;
         }
 
         public static THandler AppendPersisted<THandler>(this THandler handler, IEvent @event)
