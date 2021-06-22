@@ -3,6 +3,11 @@
   <PropertyGroup>
     <TargetFramework>net5.0</TargetFramework>
     <OutputType>Library</OutputType>
+    <Version>0.1.0</Version>
+    <Authors>Håkan Alexander</Authors>
+    <Company>HAXEN</Company>
+    <PackageProjectUrl>https://github.com/HAXEN/CQRS</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/HAXEN/CQRS</RepositoryUrl>
   </PropertyGroup>
 
   <ItemGroup>
