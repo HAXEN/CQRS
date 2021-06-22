@@ -1,22 +1,31 @@
 ﻿using System.Collections.Generic;
 using System.Reflection;
-using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace CQRS.Commanding
 {
-    public abstract class CommandHandler : ICommandHandler
+    public abstract class CommandHandler<TCommand>
+        where TCommand : class, ICommand
+    {
+        public abstract Task Handle(TCommand command, CancellationToken token = default);
+        public abstract string StreamId(TCommand command);  
+    }
+
+    public abstract class PersistedCommandHandler<TCommand> : CommandHandler<TCommand>, IPersistUsingEventStream
+        where TCommand : class, ICommand
     {
         private int _persistedVersion = -1;
         private readonly List<IEvent> _unPersistedEvents = new();
 
-        void ICommandHandler.AppendPersisted(IEvent @event)
+        void IPersistUsingEventStream.AppendPersisted(IEvent @event)
         {
             ApplyEvent(@event, false);
             _persistedVersion++;
         }
 
-        int ICommandHandler.PersistedVersion => _persistedVersion;
-        IEnumerable<IEvent> ICommandHandler.UnPersistedEvents() => _unPersistedEvents;
+        int IPersistUsingEventStream.PersistedVersion => _persistedVersion;
+        IEnumerable<IEvent> IPersistUsingEventStream.UnPersistedEvents() => _unPersistedEvents;
 
         protected void AddEvent(IEvent @event)
         {

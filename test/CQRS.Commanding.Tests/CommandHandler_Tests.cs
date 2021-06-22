@@ -1,15 +1,20 @@
-﻿using CQRS.Commanding.Testing;
+﻿using System.Threading;
+using System.Threading.Tasks;
+using CQRS.Commanding.Testing;
 using Xunit;
 
 namespace CQRS.Commanding.Tests
 {
     public class CommandHandlerTests
     {
-        private readonly TestCommandHandler _handler;
+        private readonly TestPersistUsingEventStream _handler;
+        private readonly NoEventHandler _noEventHandler;
 
         public CommandHandlerTests()
         {
-            _handler = new TestCommandHandler();
+            _handler = new TestPersistUsingEventStream();
+            _noEventHandler = new NoEventHandler();
+
             Assert.NotNull(_handler);
         }
 
@@ -38,14 +43,14 @@ namespace CQRS.Commanding.Tests
         [Fact]
         public void Should_throw_if_private_handler_for_event_is_missing_for_command()
         {
-            Assert.Throws<MissingEventHandlerException>(() => _handler.Execute(new NoEventHandlerCommand()));
+            Assert.ThrowsAsync<MissingEventHandlerException>(() => _noEventHandler.Handle(new NoEventHandlerCommand()));
         }
 
         [Fact]
         public void Should_be_able_to_handle_Command_and_produce_UnPersisted_events()
         {
-            _handler.Execute(new TestCommand{Id = "id", Name = "name"});
-            Assert.NotEmpty(((ICommandHandler)_handler).UnPersistedEvents());
+            _handler.Handle(new TestCommand{Id = "id", Name = "name"});
+            Assert.NotEmpty(((IPersistUsingEventStream)_handler).UnPersistedEvents());
             Assert.True(_handler.EventHandled);
         }
 
@@ -77,15 +82,31 @@ namespace CQRS.Commanding.Tests
         {
         }
 
-        public class NoEventHandlerCommand {}
+        public class NoEventHandlerCommand : ICommand
+        {}
 
-        public class TestCommand
+        public class TestCommand : ICommand
         {
             public string Id { get; set; }
             public string Name { get; set; }
         }
 
-        public class TestCommandHandler : CommandHandler
+        public class NoEventHandler : PersistedCommandHandler<NoEventHandlerCommand>
+        {
+            public bool EventHandled { get; set; }
+
+            public override async Task Handle(NoEventHandlerCommand command, CancellationToken token = default)
+            {
+                AddEvent(new NoHandlerEvent());
+            }
+
+            public override string StreamId(NoEventHandlerCommand command)
+            {
+                return "";
+            }
+        }
+
+        public class TestPersistUsingEventStream : PersistedCommandHandler<TestCommand>
         {
             public bool EventHandled { get; set; }
 
@@ -94,7 +115,7 @@ namespace CQRS.Commanding.Tests
                 EventHandled = true;
             }
 
-            public void Execute(TestCommand command)
+            public override async Task Handle(TestCommand command, CancellationToken token = default)
             {
                 AddEvent(new TestEvent
                 {
@@ -103,9 +124,9 @@ namespace CQRS.Commanding.Tests
                 });
             }
 
-            public void Execute(NoEventHandlerCommand command)
+            public override string StreamId(TestCommand command)
             {
-                AddEvent(new NoHandlerEvent());
+                return "";
             }
         }
     }

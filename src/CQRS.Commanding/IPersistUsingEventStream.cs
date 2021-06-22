@@ -2,7 +2,7 @@
 
 namespace CQRS.Commanding
 {
-    public interface ICommandHandler
+    public interface IPersistUsingEventStream
     {
         void AppendPersisted(IEvent @event);
         int PersistedVersion { get; }

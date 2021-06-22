@@ -3,7 +3,7 @@
 namespace CQRS.Commanding.Testing
 {
     internal class HandlerEventRePlayer<THandler> : IReplayEvents
-        where THandler: class, ICommandHandler
+        where THandler: class, IPersistUsingEventStream
     {
         private readonly THandler _handler;
 
